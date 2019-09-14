@@ -1,5 +1,6 @@
 # ignore config file containing private token for bot
 /config.json
 
-# 
+# ignore both vscode and vs setting files
 /.vscode/*
+/.vs/*
