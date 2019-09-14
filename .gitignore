@@ -1,2 +1,5 @@
 # ignore config file containing private token for bot
 /config.json
+
+# 
+/.vscode/*
