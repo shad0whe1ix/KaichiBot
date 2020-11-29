@@ -4,3 +4,6 @@
 # ignore both vscode and vs setting files
 /.vscode/*
 /.vs/*
+
+#ignore node modules
+/node_modules
