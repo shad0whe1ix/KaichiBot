@@ -11,6 +11,11 @@ const config = require('./config.json');
 // config.token contains the bot's token
 // config.prefix contains the message prefix.
 
+const fs = require('fs');
+const wordleScoreboard = './scoreboard.json';
+
+const debug = false;
+
 /**
  * Returns a random integer between min (inclusive) and max (inclusive).
  * The value is no lower than min (or the next integer greater than min
@@ -33,14 +38,14 @@ bot.on('ready', () => {
   bot.user.setActivity('*hacker voice* im in');
 
   // // list servers bot is connected to
-  // console.log("Servers: ");
-  // bot.guilds.forEach((guild) => {
-  //    console.log(" - " + guild.name);
+  console.log("Servers: ");
+  bot.guilds.forEach((guild) => {
+    console.log(" - " + guild.name);
 
-  //    guild.channels.forEach((channel) => {
-  //        console.log(' ${channel.name} ');
-  //    });
-  // });
+    guild.channels.forEach((channel) => {
+      console.log(`${channel.name}`);
+    });
+  });
 });
 
 bot.on('guildCreate', (guild) => {
@@ -55,7 +60,6 @@ bot.on('guildDelete', (guild) => {
   bot.user.setActivity(`Serving ${bot.guilds.size} servers`);
 });
 
-// function sbText(words) {
 const sbText = (words) => {
   console.log('CONVERTING TO SPONGEBOB TEXT: ' + words);
   const newwords = new Array(words.length);
@@ -79,6 +83,40 @@ const sbText = (words) => {
   return newwords;
 };
 
+const trackScore = (msg) => {
+  const result = msg.content.split(' ')[2][0]
+  console.log(`logging score from ${msg.author.username}: ${msg.content.split('\n')[0]}`);
+  let score = 0;
+  if (!isNaN(score)) {
+    score = 7 - result;
+  }
+  user = msg.author.username
+  let scores = JSON.parse(fs.readFileSync(wordleScoreboard).toString());
+
+
+  if (!scores[user]) {
+    scores[user] = score;
+  } else {
+    scores[user] += score;
+  }
+
+  fs.writeFileSync(wordleScoreboard, JSON.stringify(scores));
+}
+
+const printScore = (msg) => {
+  let scores = JSON.parse(fs.readFileSync(wordleScoreboard).toString());
+  console.log(scores);
+  res = '';
+  for (user in scores) {
+    res += `${user}: ${scores[user]}`
+  }
+  msg.channel.send(res);
+}
+
+const clearScore = (msg) => {
+  fs.writeFileSync(wordleScoreboard, JSON.stringify({}));
+}
+
 bot.on('message', async (message) => {
   // This event will run on every single message received, from any channel or DM.
 
@@ -97,6 +135,11 @@ bot.on('message', async (message) => {
   // const args = message.content.slice(config.prefix.length).trim().split(/ +/g);
   const args = message.content.slice(config.prefix.length).trim().split(/ +/g);
   const command = args.shift().toLowerCase();
+
+  const key = "Wordle"
+  if (message.content.startsWith(key)) {
+    trackScore(message);
+  }
 
   if (command === 'ping') {
     // Calculates ping between sending a message and editing it, giving a nice round-trip latency.
@@ -124,9 +167,17 @@ bot.on('message', async (message) => {
       for (i = 0; i < owomentions; i++) {
         str += '?';
       }
-      message.channel.send(':3?');
+      message.channel.send(str);
       owomentions++;
     }
+  }
+
+  if (command === 'score') {
+    printScore(message);
+  }
+
+  if (command === 'clearscore' && message.author.id == '185596219865825290') {
+    clearScore(message);
   }
 
   const imRegex = /(i|I)(')?(m|M)\s?/g;
@@ -139,8 +190,10 @@ bot.on('message', async (message) => {
     message.channel.send(dadJoke);
   }
 
-  console.log('received message: ' + command + '; ' + args);
-  console.log('raw message: <' + message + '>');
+  if (debug) {
+    console.log('received message: ' + command + '; ' + args);
+    console.log('raw message: <' + message + '>');
+  }
 
   if (command === 'r') {
     const dice = args[0].split("d");
